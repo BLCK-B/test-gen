@@ -14,7 +14,7 @@ COPY server.js ./
 COPY codegen.js ./
 
 # Expose port
-EXPOSE 3000
+EXPOSE 6565
 
 # Start the server
 CMD ["node", "server.js"]
