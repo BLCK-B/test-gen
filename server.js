@@ -1,7 +1,14 @@
 import express from 'express'
 import { generateDictionaryDrivenCode } from './codegen.js'
+import cors from 'cors'
 
 const app = express()
+
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://gen.online-data.uk'],
+    methods: ['POST', 'GET', 'OPTIONS'],
+    credentials: true
+}))
 
 app.use(express.json())
 
