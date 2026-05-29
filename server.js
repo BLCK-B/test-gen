@@ -5,7 +5,7 @@ import cors from 'cors'
 const app = express()
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://gen.online-data.uk'],
+    origin: true,
     methods: ['POST', 'GET', 'OPTIONS'],
     credentials: true
 }))
