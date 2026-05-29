@@ -1,15 +1,11 @@
 import express from 'express'
-import cors from 'cors'
 import { generateDictionaryDrivenCode } from './codegen.js'
 
 const app = express()
 
-// Allow any origin
-app.use(cors())
-
 app.use(express.json())
 
-app.post('/api/content', async (req, res) => {
+app.post('/api/content', (req, res) => {
     const { url, userAgent } = req.body ?? {}
 
     const content = generateDictionaryDrivenCode({
@@ -21,6 +17,8 @@ app.post('/api/content', async (req, res) => {
     res.json({ content })
 })
 
-app.listen(6565, () => {
-    console.log('Server running on http://localhost:6565')
-})
+const PORT = 6565;
+
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Running on 0.0.0.0:${PORT}`);
+});
