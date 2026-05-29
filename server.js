@@ -14,7 +14,7 @@ app.use(express.json())
 
 app.post('/api/content', (req, res) => {
     const { url, userAgent } = req.body ?? {}
-
+    console.log("request from " + url + " " + userAgent);
     const content = generateDictionaryDrivenCode({
         maxLines: 50,
         indentChar: '  ',
