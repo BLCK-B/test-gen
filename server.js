@@ -1,8 +1,12 @@
-// server.js
 import express from 'express'
-import {generateDictionaryDrivenCode} from "./codegen.js";
+import cors from 'cors'
+import { generateDictionaryDrivenCode } from './codegen.js'
 
 const app = express()
+
+// Allow any origin
+app.use(cors())
+
 app.use(express.json())
 
 app.post('/api/content', async (req, res) => {
@@ -13,6 +17,7 @@ app.post('/api/content', async (req, res) => {
         indentChar: '  ',
         useLlmLayer: true
     })
+
     res.json({ content })
 })
 
