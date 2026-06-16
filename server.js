@@ -1,20 +1,6 @@
 import express from 'express'
 import { generateDictionaryDrivenCode } from './codegen.js'
 import cors from 'cors'
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
-import { dirname } from 'path'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-const logFilePath = path.join(__dirname, 'requests.log')
-
-// Create log file if it doesn't exist
-if (!fs.existsSync(logFilePath)) {
-    fs.writeFileSync(logFilePath, '')
-}
 
 const app = express()
 
@@ -33,11 +19,8 @@ app.post('/api/content', (req, res) => {
 
     console.log(logEntry.trim())
 
-    // Append to log file
-    fs.appendFileSync(logFilePath, logEntry)
-
     const content = generateDictionaryDrivenCode({
-        maxLines: 50,
+        maxLines: 100,
         indentChar: '  ',
         useLlmLayer: true
     })
