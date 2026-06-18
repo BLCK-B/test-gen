@@ -23,6 +23,63 @@ export const URL_WORDLIST = [
     "session", "state", "store", "stores", "streams", "tests", "testing", "tokens", "ui",
     "v1.2", "v1.3", "v1.5", "v2.0", "v2.3", "v3.0",
     "beta", "alpha", "rc", "stable", "nightly", "latest",
+
+    "compare", "vs", "alternative", "alternatives", "vs-code", "explained",
+    "complete", "ultimate", "simple", "modern", "minimal", "production", "real-world",
+    "common", "mistakes", "pitfalls", "gotchas", "tips", "tricks", "faq", "troubleshooting",
+    "checklist", "roadmap", "glossary", "snippet", "snippets", "recipe", "recipes",
+
+    "swift", "objectivec", "elixir", "erlang", "haskell", "clojure", "ocaml", "fsharp",
+    "perl", "lua", "groovy", "bash", "powershell", "zig", "nim", "crystal", "julia", "r",
+    "solidity", "wasm", "webassembly", "assembly",
+
+    "solid", "remix", "astro", "qwik", "preact", "lit", "ember", "backbone", "jquery",
+    "tailwind", "bootstrap", "sass", "less", "webpack", "vite", "rollup", "esbuild",
+    "babel", "eslint", "prettier", "jest", "vitest", "playwright", "cypress", "mocha",
+    "storybook", "turborepo", "nx", "pnpm", "yarn", "npm",
+
+    "nestjs", "koa", "hapi", "gin", "echo", "fiber", "actix", "axum", "rocket",
+    "phoenix", "symfony", "fastify", "tornado", "sanic", "starlette",
+
+    "kafka", "rabbitmq", "elasticsearch", "cassandra", "dynamodb", "cockroachdb",
+    "clickhouse", "neo4j", "influxdb", "memcached", "etcd", "couchdb", "mariadb",
+    "prisma", "sequelize", "typeorm", "mongoose", "drizzle", "sqlalchemy", "alembic",
+
+    "terraform", "ansible", "pulumi", "helm", "vagrant", "podman", "containerd",
+    "jenkins", "circleci", "travis", "argocd", "prometheus", "grafana", "datadog",
+    "sentry", "kibana", "logstash", "vault", "consul", "nginx", "apache", "traefik",
+    "cloudflare", "vercel", "netlify", "heroku", "digitalocean", "lambda-edge",
+    "s3", "ec2", "rds", "eks", "ecs", "fargate", "cloudfront", "route53",
+
+    "jwt", "oauth2", "openid", "saml", "rbac", "cors", "csrf", "xss", "tls", "ssl",
+    "encryption", "hashing", "bcrypt", "argon2", "rate-limiting", "throttling",
+
+    "websocket", "websockets", "grpc", "webhook", "webhooks", "sse", "polling",
+    "pagination", "filtering", "sorting", "validation", "serialization",
+    "migrations", "seeding", "transactions", "indexing", "sharding", "replication",
+    "partitioning", "normalization", "denormalization", "backup", "restore",
+
+    "async", "await", "promises", "concurrency", "parallelism", "threading",
+    "coroutines", "generators", "iterators", "closures", "decorators", "mixins",
+    "interfaces", "generics", "enums", "traits", "macros", "reflection",
+    "dependency-injection", "inversion-of-control", "memoization", "currying",
+
+    "monorepo", "microservices", "monolith", "serverless", "event-driven",
+    "cqrs", "ddd", "tdd", "bdd", "solid-principles", "design-patterns",
+    "clean-architecture", "hexagonal", "observability", "tracing", "logging",
+    "metrics", "monitoring", "alerting", "scaling", "load-balancing", "failover",
+
+    "performance", "optimization", "benchmark", "benchmarks", "profiling",
+    "memory-leak", "garbage-collection", "lazy-loading", "code-splitting",
+    "tree-shaking", "minification", "compression", "bundling", "hot-reload",
+
+    "ssr", "ssg", "isr", "hydration", "spa", "pwa", "seo", "accessibility", "a11y",
+    "responsive", "dark-mode", "i18n", "l10n", "localization", "internationalization",
+
+    "supervised", "unsupervised", "reinforcement", "neural-network", "transformer",
+    "embedding", "embeddings", "vector", "llm", "rag", "fine-tuning", "prompt",
+    "inference", "tokenizer", "pipeline", "dataset", "training", "gradient",
+    "pytorch", "tensorflow", "keras", "scikit-learn", "pandas", "numpy", "jupyter",
 ]
 
 
@@ -42,6 +99,17 @@ function mulberry32(seed) {
 
 const pick = (rng, arr) => arr[Math.floor(rng() * arr.length)]
 
+// Crawlers send mangled URLs (truncated %-escapes, stray %, bad UTF-8). A raw
+// decodeURIComponent throws URIError on those; fall back to the undecoded slug
+// so the maze still renders a 200 instead of bubbling up as an error.
+function safeDecode(s) {
+    try {
+        return decodeURIComponent(s)
+    } catch {
+        return s
+    }
+}
+
 function makeSlug(rng) {
     const n = 3 + Math.floor(rng() * 5)
     const parts = []
@@ -52,16 +120,16 @@ function makeSlug(rng) {
 // "related" links: variations of the current slug. "deeper" links: fresh paths
 // spiralling further into the maze. Both derived from the path seed.
 export function linksFor(pathname) {
-    const slug = decodeURIComponent(pathname.replace(/^\/+/, ''))
+    const slug = safeDecode(pathname.replace(/^\/+/, ''))
     const rng = mulberry32(seedFromString(pathname))
 
     const related = new Set()
-    while (related.size < 5) {
+    while (related.size < 10) {
         related.add('/' + (slug ? slug + '-' : '') + pick(rng, URL_WORDLIST))
     }
 
     const deeper = []
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
         const extra = Math.floor(rng() * 10) === 0 ? '-' + Math.floor(rng() * 100) : ''
         deeper.push('/' + makeSlug(rng) + extra)
     }

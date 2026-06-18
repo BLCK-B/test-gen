@@ -525,8 +525,10 @@ const wordlist = [
     "ok",
     "error",
     "success",
-    "failure"
+    "failure",
+
+    "abstract", "assert", "byte", "char", "short", "float", "void", "default",
+    "instanceof", "native", "strictfp", "transient", "super", "this", "throws", "goto", "const",
 ];
 
-// Built once at module load for O(1) membership tests (see llmEmitBlock).
 const wordlistSet = new Set(wordlist);

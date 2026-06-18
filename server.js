@@ -60,6 +60,26 @@ app.get('/{*splat}', (req, res) => {
         .send(html)
 })
 
+// Malformed URLs (truncated %-escapes, stray %, bad UTF-8) make the router's
+// param decoding throw URIError, which Express's default handler turns into a
+// 400 with a stack trace. For a tarpit that's two bugs: a 400 is an escape
+// hatch that tells a crawler to stop, and the default page leaks server paths.
+// Swallow it and serve a normal 200 maze page so the crawler stays trapped.
+app.use((err, req, res, next) => {
+    if (res.headersSent) return next(err)
+
+    log(req, 'PAGE')
+
+    const content = generateDictionaryDrivenCode({ maxLines: 100, indentChar: '  ', useLlmLayer: true })
+    const html = renderPage(req.path, content)
+
+    res
+        .status(200)
+        .type('text/html')
+        .set('Cache-Control', 'public, max-age=3600')
+        .send(html)
+})
+
 const PORT = process.env.PORT || 6565
 
 app.listen(PORT, '0.0.0.0', () => {
