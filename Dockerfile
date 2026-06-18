@@ -12,6 +12,7 @@ RUN npm ci --only=production
 # Copy server code (server.js and codegen.js, plus any other .js files it needs)
 COPY server.js ./
 COPY codegen.js ./
+COPY maze.js ./
 
 # Expose port
 EXPOSE 6565
