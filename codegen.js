@@ -30,39 +30,27 @@ export function generateDictionaryDrivenCode(options = {}) {
     // ----------------------------
     // TERMS / EXPRESSIONS
     // ----------------------------
+    // Lazily build only the chosen form instead of allocating all ten and
+    // discarding nine. Each branch is identical to one of the old forms.
     function term() {
-        const n = rand(1000) - 300;
-        const n2 = rand(100) + 1;
-        const id = ident();
-        const id2 = ident();
-
-        const forms = [
-            id,
-            `"${id}"`,
-            `${n}`,
-            `${n2}`,
-            pick(["true", "false", "null", "undefined"]),
-            `${id}[${rand(20)}]`,
-            `${id}.${pick()}`,
-            `${id}.${pick()}()`,
-            `${id}.${pick()}(${id2})`,
-            `${pick()}.${pick()}(${id})`
-        ];
-
-        return forms[rand(forms.length)];
+        switch (rand(10)) {
+            case 0: return ident();
+            case 1: return `"${ident()}"`;
+            case 2: return `${rand(1000) - 300}`;
+            case 3: return `${rand(100) + 1}`;
+            case 4: return pick(["true", "false", "null", "undefined"]);
+            case 5: return `${ident()}[${rand(20)}]`;
+            case 6: return `${ident()}.${pick()}`;
+            case 7: return `${ident()}.${pick()}()`;
+            case 8: return `${ident()}.${pick()}(${ident()})`;
+            default: return `${pick()}.${pick()}(${ident()})`;
+        }
     }
 
     function expr() {
         const a = term();
-        const b = term();
-        const op = pick();
-
-        const forms = [
-            `${a} ${op} ${b}`,
-            `${a} ? ${term()} : ${term()}`
-        ];
-
-        return forms[rand(forms.length)];
+        if (rand(2) === 0) return `${a} ${pick()} ${term()}`;
+        return `${a} ? ${term()} : ${term()}`;
     }
 
     // ----------------------------
@@ -94,42 +82,28 @@ export function generateDictionaryDrivenCode(options = {}) {
     // ----------------------------
     // ATOMS
     // ----------------------------
+    // Same 17 forms as before, but each branch only computes the idents/exprs
+    // it actually uses rather than building all of them up front.
     function emitAtom() {
-        const key1 = pick();
-        const key2 = pick();
-        const key3 = pick();
-        const key4 = pick();
-
-        const a = ident();
-        const b = ident();
-        const c = ident();
-        const d = ident();
-
-        const e1 = expr();
-        const e2 = expr();
-        const e3 = expr();
-
-        const forms = [
-            `${key1} ${a} = ${e1};`,
-            `${key2} ${a} = ${e2};`,
-            `${a} = ${e3};`,
-            `${key3} (${e1}) { ${b} = ${e2}; }`,
-            `${key3} (${e1}) { ${d}(); } ${key4} { ${c}(); }`,
-            `${key3} (let ${a} = 0; ${a} < ${rand(12) + 1}; ${a}++) { ${b}(${e3}); }`,
-            `${key3} (${e1}) { ${b}(${e2}); }`,
-            `${key3} ${a} { ${b} = ${e3}; }`,
-            `${key3} ${a} = () => { ${b} = ${e3}; };`,
-            `throw new ${pick()}(${e1});`,
-            `return ${e1};`,
-            `console.${pick()}(${e1});`,
-            `setTimeout(() => ${a}(${e2}), ${rand(1000)});`,
-            `await ${a}(${e2});`,
-            `${key1} ${a} from ${b};`,
-            `export ${key2} ${a};`,
-            `${a}.${pick()}(${expr()});`
-        ];
-
-        return forms[rand(forms.length)];
+        switch (rand(17)) {
+            case 0:  return `${pick()} ${ident()} = ${expr()};`;
+            case 1:  return `${pick()} ${ident()} = ${expr()};`;
+            case 2:  return `${ident()} = ${expr()};`;
+            case 3:  return `${pick()} (${expr()}) { ${ident()} = ${expr()}; }`;
+            case 4:  return `${pick()} (${expr()}) { ${ident()}(); } ${pick()} { ${ident()}(); }`;
+            case 5:  { const a = ident(); return `${pick()} (let ${a} = 0; ${a} < ${rand(12) + 1}; ${a}++) { ${ident()}(${expr()}); }`; }
+            case 6:  return `${pick()} (${expr()}) { ${ident()}(${expr()}); }`;
+            case 7:  return `${pick()} ${ident()} { ${ident()} = ${expr()}; }`;
+            case 8:  return `${pick()} ${ident()} = () => { ${ident()} = ${expr()}; };`;
+            case 9:  return `throw new ${pick()}(${expr()});`;
+            case 10: return `return ${expr()};`;
+            case 11: return `console.${pick()}(${expr()});`;
+            case 12: { const a = ident(); return `setTimeout(() => ${a}(${expr()}), ${rand(1000)});`; }
+            case 13: return `await ${ident()}(${expr()});`;
+            case 14: return `${pick()} ${ident()} from ${ident()};`;
+            case 15: return `export ${pick()} ${ident()};`;
+            default: return `${ident()}.${pick()}(${expr()});`;
+        }
     }
 
     // ----------------------------
@@ -246,15 +220,17 @@ export function generateDictionaryDrivenCode(options = {}) {
         const tokens = base
             .split(/[ \n\t{}()\[\];'"=<>+\-*/.%&|?:,]+/)
             .filter(Boolean)
-            .map(w => (wordlist.includes(w) ? w : pick()));
+            .map(w => (wordlistSet.has(w) ? w : pick()));
 
         addObservation(tokens);
         emitTokens.push(...tokens.slice(-20));
 
         if (!useLlmLayer || emitTokens.length < 10) return base;
 
-        const lines = base.split("\n").map((line, i) => {
-            if (i === 0 || i === base.split("\n").length - 1) return line;
+        const baseLines = base.split("\n");
+        const last = baseLines.length - 1;
+        const lines = baseLines.map((line, i) => {
+            if (i === 0 || i === last) return line;
             if (!maybe(0.3)) return line;
 
             return indentChar + llmEmitAtom();
@@ -268,8 +244,9 @@ export function generateDictionaryDrivenCode(options = {}) {
     // ----------------------------
     const out = [];
     let usedLlm = 0;
+    let totalLen = 0;   // running length instead of re-joining every iteration
 
-    while (out.join("\n").length < 100_000 && out.length < maxLines) {
+    while (totalLen < 100_000 && out.length < maxLines) {
         const depth = 0;
 
         const plain = emitBlock(depth);
@@ -278,6 +255,7 @@ export function generateDictionaryDrivenCode(options = {}) {
             : plain;
 
         out.push(maybeEnhanced);
+        totalLen += maybeEnhanced.length + 1;   // +1 for the "\n" join separator
         usedLlm++;
 
         if (usedLlm >= llmCacheSteps) {
@@ -549,3 +527,6 @@ const wordlist = [
     "success",
     "failure"
 ];
+
+// Built once at module load for O(1) membership tests (see llmEmitBlock).
+const wordlistSet = new Set(wordlist);
