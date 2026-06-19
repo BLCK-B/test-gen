@@ -12,26 +12,17 @@ export function generateDictionaryDrivenCode(options = {}) {
     const pick = () => wordlist[rand(wordlist.length)];
     const maybe = (p) => Math.random() < p;
 
-    // ----------------------------
-    // IDENT (CamelCase-ish)
-    // ----------------------------
     function ident() {
-        const parts = [];
         const len = 1 + rand(chainLength);
+        const parts = new Array(len);
 
         for (let i = 0; i < len; i++) {
-            const w = pick();
-            parts.push(w.charAt(0).toUpperCase() + w.slice(1));
+            parts[i] = capWordlist[rand(wordlist.length)];
         }
 
         return parts.join(pick(["", "_", ""]));
     }
 
-    // ----------------------------
-    // TERMS / EXPRESSIONS
-    // ----------------------------
-    // Lazily build only the chosen form instead of allocating all ten and
-    // discarding nine. Each branch is identical to one of the old forms.
     function term() {
         switch (rand(10)) {
             case 0: return ident();
@@ -53,9 +44,6 @@ export function generateDictionaryDrivenCode(options = {}) {
         return `${a} ? ${term()} : ${term()}`;
     }
 
-    // ----------------------------
-    // MARKOV COMMENT GENERATION
-    // ----------------------------
     function generateComment() {
         const len = 3 + rand(6);
         let current = pick();
@@ -79,11 +67,6 @@ export function generateDictionaryDrivenCode(options = {}) {
         return "// " + tokens.slice(0, len).join(" ");
     }
 
-    // ----------------------------
-    // ATOMS
-    // ----------------------------
-    // Same 17 forms as before, but each branch only computes the idents/exprs
-    // it actually uses rather than building all of them up front.
     function emitAtom() {
         switch (rand(17)) {
             case 0:  return `${pick()} ${ident()} = ${expr()};`;
@@ -106,9 +89,6 @@ export function generateDictionaryDrivenCode(options = {}) {
         }
     }
 
-    // ----------------------------
-    // BLOCK GENERATION
-    // ----------------------------
     function emitBlock(depth = 0) {
         const lines = [];
         const maxDepth = maxDeepBlocks;
@@ -166,9 +146,6 @@ export function generateDictionaryDrivenCode(options = {}) {
         return lines.join("\n");
     }
 
-    // ----------------------------
-    // MARKOV MODEL
-    // ----------------------------
     const markov = {};
     const emitTokens = [];
 
@@ -217,10 +194,12 @@ export function generateDictionaryDrivenCode(options = {}) {
     function llmEmitBlock(depth) {
         const base = emitBlock(depth);
 
-        const tokens = base
-            .split(/[ \n\t{}()\[\];'"=<>+\-*/.%&|?:,]+/)
-            .filter(Boolean)
-            .map(w => (wordlistSet.has(w) ? w : pick()));
+        const raw = base.split(/[ \n\t{}()\[\];'"=<>+\-*/.%&|?:,]+/);
+        const tokens = [];
+        for (let i = 0; i < raw.length; i++) {
+            const w = raw[i];
+            if (w) tokens.push(wordlistSet.has(w) ? w : pick());
+        }
 
         addObservation(tokens);
         emitTokens.push(...tokens.slice(-20));
@@ -239,9 +218,6 @@ export function generateDictionaryDrivenCode(options = {}) {
         return lines.join("\n");
     }
 
-    // ----------------------------
-    // MAIN LOOP
-    // ----------------------------
     const out = [];
     let usedLlm = 0;
     let totalLen = 0;   // running length instead of re-joining every iteration
@@ -532,3 +508,5 @@ const wordlist = [
 ];
 
 const wordlistSet = new Set(wordlist);
+
+const capWordlist = wordlist.map((w) => w.charAt(0).toUpperCase() + w.slice(1));
