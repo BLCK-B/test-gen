@@ -101,13 +101,22 @@ export function generateDictionaryDrivenCode(options = {}) {
 
     function ident() {
         const len = 1 + rand(chainLength);
-        const parts = new Array(len);
 
+        // Common single-part case: skip the array + join. pick() is still called
+        // (it draws the join separator in the multi-part path) to keep the RNG
+        // sequence — and thus the output — identical; its result is unused here.
+        if (len === 1) {
+            const only = capWordlist[rand(wordlist.length)];
+            pick();
+            return only;
+        }
+
+        const parts = new Array(len);
         for (let i = 0; i < len; i++) {
             parts[i] = capWordlist[rand(wordlist.length)];
         }
 
-        return parts.join(pick(["", "_", ""]));
+        return parts.join(pick());
     }
 
     function term() {
@@ -116,7 +125,7 @@ export function generateDictionaryDrivenCode(options = {}) {
             case 1: return `"${ident()}"`;
             case 2: return `${rand(1000) - 300}`;
             case 3: return `${rand(100) + 1}`;
-            case 4: return pick(["true", "false", "null", "undefined"]);
+            case 4: return pick();
             case 5: return `${ident()}[${rand(20)}]`;
             case 6: return `${ident()}.${pick()}`;
             case 7: return `${ident()}.${pick()}()`;
@@ -146,12 +155,25 @@ export function generateDictionaryDrivenCode(options = {}) {
     }
 
     function generateCommentFromAtom(atom) {
-        const tokens = atom
-            .split(/[^\w]+/)
-            .filter(Boolean);
-
-        const len = Math.min(6, tokens.length);
-        return "// " + tokens.slice(0, len).join(" ");
+        // Equivalent to atom.split(/[^\w]+/).filter(Boolean), capped at 6 tokens,
+        // joined by spaces — done as a charCode scan with no intermediate arrays.
+        let result = "// ";
+        let count = 0;
+        let start = -1;
+        const n = atom.length;
+        for (let i = 0; i <= n; i++) {
+            const c = i < n ? atom.charCodeAt(i) : -1;
+            const isWord = c >= 0 && c < 128 && WORD128[c] === 1;
+            if (isWord) {
+                if (start < 0) start = i;
+            } else if (start >= 0) {
+                if (count > 0) result += " ";
+                result += atom.slice(start, i);
+                start = -1;
+                if (++count === 6) break;
+            }
+        }
+        return result;
     }
 
     function emitAtom() {
@@ -233,7 +255,10 @@ export function generateDictionaryDrivenCode(options = {}) {
         return lines.join("\n");
     }
 
-    const markov = {};
+    // Map (not a plain object) so the per-token key lookups stay monomorphic.
+    // An object accumulating hundreds of arbitrary string keys degrades into
+    // dictionary mode and turns these into megamorphic property loads.
+    const markov = new Map();
     const emitTokens = [];
 
     function addObservation(tokens) {
@@ -243,17 +268,18 @@ export function generateDictionaryDrivenCode(options = {}) {
             const prev = tokens[i];
             const next = tokens[i + 1];
 
-            if (!markov[prev]) markov[prev] = [];
-            markov[prev].push(next);
+            let follow = markov.get(prev);
+            if (!follow) markov.set(prev, follow = []);
+            follow.push(next);
         }
     }
 
     function getNextWordFromContext(prev) {
-        if (!prev || !markov[prev] || markov[prev].length === 0) {
+        const follow = prev ? markov.get(prev) : undefined;
+        if (!follow || follow.length === 0) {
             return pick();
         }
 
-        const follow = markov[prev];
         return follow[rand(follow.length)];
     }
 
@@ -273,7 +299,7 @@ export function generateDictionaryDrivenCode(options = {}) {
             current = w;
         }
 
-        const trailing = pick([";", "()", "{}", "{ return; }", "[]"]);
+        const trailing = pick();
 
         return gen.join(" ") + " " + trailing + " " + emitAtom();
     }
@@ -281,11 +307,25 @@ export function generateDictionaryDrivenCode(options = {}) {
     function llmEmitBlock(depth) {
         const base = emitBlock(depth);
 
-        const raw = base.split(/[ \n\t{}()\[\];'"=<>+\-*/.%&|?:,]+/);
+        // Tokenize on the same delimiter set as the original regex split, but via
+        // a single charCode scan: each maximal non-delimiter run is one token,
+        // emitted left-to-right so pick() (for non-dictionary tokens) is consumed
+        // in the exact same order and count as before.
         const tokens = [];
-        for (let i = 0; i < raw.length; i++) {
-            const w = raw[i];
-            if (w) tokens.push(wordlistSet.has(w) ? w : pick());
+        const n = base.length;
+        let start = -1;
+        for (let i = 0; i <= n; i++) {
+            const c = i < n ? base.charCodeAt(i) : -1;
+            const isDelim = c < 0 || (c < 128 && DELIM128[c] === 1);
+            if (isDelim) {
+                if (start >= 0) {
+                    const w = base.slice(start, i);
+                    tokens.push(wordlistSet.has(w) ? w : pick());
+                    start = -1;
+                }
+            } else if (start < 0) {
+                start = i;
+            }
         }
 
         addObservation(tokens);
@@ -549,6 +589,24 @@ const wordlistSet = new Set(wordlist);
 
 const capWordlist = wordlist.map((w) => w.charAt(0).toUpperCase() + w.slice(1));
 
+// ASCII delimiter lookup tables for the two hot tokenizers below. Built once so
+// the per-call tokenization is a plain charCode scan instead of a regex split
+// (RegExpSplit + the compiled char-class were ~10% of CPU in profiling). Every
+// delimiter in both original regexes is ASCII, so any code point >= 128 is by
+// definition part of a token — matching the regexes' behaviour exactly.
+
+// Mirrors /[ \n\t{}()\[\];'"=<>+\-*/.%&|?:,]+/ (the block tokenizer split set).
+const SPLIT_DELIMS = " \n\t{}()[];'\"=<>+-*/.%&|?:,";
+const DELIM128 = new Uint8Array(128);
+for (let i = 0; i < SPLIT_DELIMS.length; i++) DELIM128[SPLIT_DELIMS.charCodeAt(i)] = 1;
+
+// Mirrors \w in /[^\w]+/ (the comment tokenizer): [A-Za-z0-9_], ASCII-only (no /u).
+const WORD128 = new Uint8Array(128);
+for (let c = 48; c <= 57; c++) WORD128[c] = 1;   // 0-9
+for (let c = 65; c <= 90; c++) WORD128[c] = 1;   // A-Z
+for (let c = 97; c <= 122; c++) WORD128[c] = 1;  // a-z
+WORD128[95] = 1;                                 // _
+
 // --- prose vocabulary -------------------------------------------------------
 // Clean alphabetic words pulled from the dictionary (drops symbols, CJK, tags,
 // operators) so prose sentences stay readable while still being dictionary-driven.
@@ -565,14 +623,6 @@ const proseAdjectives = [
     "concurrent", "declarative", "idempotent", "ephemeral", "deterministic",
     "scalable", "resilient", "modular", "lightweight", "canonical", "optimized",
     "consistent", "decoupled", "fault-tolerant", "backward-compatible",
-];
-
-// 3rd-person singular forms for "the X verbs the Y" subject-first sentences.
-const proseVerbs3 = [
-    "initializes", "resolves", "validates", "caches", "serializes", "dispatches",
-    "aggregates", "normalizes", "persists", "negotiates", "throttles", "reconciles",
-    "propagates", "delegates", "buffers", "streams", "encodes", "schedules",
-    "observes", "orchestrates", "intercepts", "memoizes", "partitions", "rehydrates",
 ];
 
 // Base forms for "to X", "must X", "can X" constructions.
