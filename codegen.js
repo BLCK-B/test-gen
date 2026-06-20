@@ -1,3 +1,5 @@
+import { URL_WORDLIST } from './maze.js'
+
 export function generateDictionaryDrivenCode(options = {}) {
     const {
         maxLines = 500,
@@ -11,6 +13,91 @@ export function generateDictionaryDrivenCode(options = {}) {
     const rand = (n) => Math.floor(Math.random() * n);
     const pick = () => wordlist[rand(wordlist.length)];
     const maybe = (p) => Math.random() < p;
+
+    const choose = (arr) => arr[rand(arr.length)];
+    const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+    const pickProse = () => proseWords[rand(proseWords.length)];
+    const pickTech = () => choose(techTerms);
+
+    function noun() {
+        let s = maybe(0.3) ? `${pickTech()} ${pickProse()}` : pickProse();
+        if (maybe(0.4)) s += " " + choose(proseNounSuffix);
+        return s;
+    }
+
+    function adjNoun() {
+        if (maybe(0.5)) return choose(proseAdjectives) + " " + noun();
+        return noun();
+    }
+
+    function np() {
+        const phrase = adjNoun();
+        switch (rand(10)) {
+            case 0: case 1: case 2: case 3:
+                return "the " + phrase;
+            case 4: case 5:
+                return choose(["each", "every", "this", "any", "its", "the underlying", "a single"]) + " " + phrase;
+            case 6: case 7: {
+                const article = /^[aeiou]/i.test(phrase) ? "an" : "a";
+                return article + " " + phrase;
+            }
+            default:
+                return phrase + "s";
+        }
+    }
+
+    function techPhrase() {
+        return `${choose(techPreps)} ${pickTech()}`;
+    }
+
+    function vp() {
+        const v3 = () => choose(proseDocVerbs3);
+        switch (rand(9)) {
+            case 0: case 1: return `${v3()} ${np()}`;
+            case 2: return `${v3()} ${np()} ${choose(proseQualifiers)}`;
+            case 3: return `accepts ${np()} and returns ${np()}`;
+            case 4: return `${v3()} ${np()}, returning ${np()} on ${choose(["success", "completion", "the next call", "cache miss"])}`;
+            case 5: return `defaults to ${np()} unless ${np()} ${choose(proseDocVerbs3)} ${np()}`;
+            case 6: return `${v3()} ${np()} and ${v3()} ${np()} ${choose(proseQualifiers)}`;
+            case 7: return `${v3()} ${np()} ${techPhrase()}`;
+            default: return `can ${choose(proseVerbsBase)} ${np()} ${choose(proseQualifiers)}`;
+        }
+    }
+
+    function proseSentence() {
+        let s;
+        switch (rand(13)) {
+            case 0: s = `${np()} is a ${adjNoun()} that ${vp()}`; break;
+            case 1: case 2: s = `${np()} ${vp()}`; break;
+            case 3: s = `By default, ${np()} ${vp()}`; break;
+            case 4: s = `Each call to ${np()} ${vp()} ${choose(proseQualifiers)}`; break;
+            case 5: s = `${np()} accepts ${np()} and returns ${np()} ${choose(proseQualifiers)}`; break;
+            case 6: s = `Use ${np()} to ${choose(proseVerbsBase)} ${np()}; ${np()} ${vp()}`; break;
+            case 7: s = `${np()} ${vp()} and ${vp()}`; break;
+            case 8: s = `${choose(proseConnectors)} ${np()} ${vp()}`; break;
+            case 9: s = `${np()} requires ${np()}; otherwise it ${vp()}`; break;
+            case 10: s = `Built on ${pickTech()}, ${np()} ${vp()}`; break;
+            case 11: s = `${pickTech()} ${vp()} ${techPhrase()}`; break;
+            default: s = `Factually, ${np()} ${vp()} before ${np()} ${vp()}`; break;
+        }
+        s = cap(s.trimStart());
+        if (!/[.!?]$/.test(s)) s += ".";
+        return s;
+    }
+
+    function proseParagraph() {
+        const n = 6;
+        const parts = [];
+        for (let i = 0; i < n; i++) parts.push(proseSentence());
+        return parts.join(" ");
+    }
+
+    function generateProse() {
+        const n = 12;
+        const paras = [];
+        for (let i = 0; i < n; i++) paras.push(proseParagraph());
+        return paras.join("\n\n");
+    }
 
     function ident() {
         const len = 1 + rand(chainLength);
@@ -222,7 +309,7 @@ export function generateDictionaryDrivenCode(options = {}) {
     let usedLlm = 0;
     let totalLen = 0;   // running length instead of re-joining every iteration
 
-    while (totalLen < 100_000 && out.length < maxLines) {
+    while (totalLen < 1000000 && out.length < maxLines) {
         const depth = 0;
 
         const plain = emitBlock(depth);
@@ -263,7 +350,7 @@ export function generateDictionaryDrivenCode(options = {}) {
         out.splice(rand(out.length + 1), 0, onceInThousandFive);
     }
 
-    return out.join("\n\n");
+    return generateProse() + "\n\n" + out.join("\n\n");
 }
 
 const wordlist = [
@@ -416,7 +503,6 @@ const wordlist = [
     "unlock",
     "yield",
     "exception",
-    "fail",
     "recover",
     "abort",
     "compute",
@@ -462,6 +548,136 @@ const wordlist = [
 const wordlistSet = new Set(wordlist);
 
 const capWordlist = wordlist.map((w) => w.charAt(0).toUpperCase() + w.slice(1));
+
+// --- prose vocabulary -------------------------------------------------------
+// Clean alphabetic words pulled from the dictionary (drops symbols, CJK, tags,
+// operators) so prose sentences stay readable while still being dictionary-driven.
+const proseWords = [...new Set(wordlist.filter((w) => /^[A-Za-z]{3,}$/.test(w)))];
+
+const proseNounSuffix = [
+    "layer", "module", "pipeline", "service", "strategy", "mechanism",
+    "component", "subsystem", "interface", "handler", "runtime", "engine",
+    "protocol", "registry", "scheduler", "context", "boundary", "abstraction",
+];
+
+const proseAdjectives = [
+    "asynchronous", "immutable", "distributed", "stateless", "reactive",
+    "concurrent", "declarative", "idempotent", "ephemeral", "deterministic",
+    "scalable", "resilient", "modular", "lightweight", "canonical", "optimized",
+    "consistent", "decoupled", "fault-tolerant", "backward-compatible",
+];
+
+// 3rd-person singular forms for "the X verbs the Y" subject-first sentences.
+const proseVerbs3 = [
+    "initializes", "resolves", "validates", "caches", "serializes", "dispatches",
+    "aggregates", "normalizes", "persists", "negotiates", "throttles", "reconciles",
+    "propagates", "delegates", "buffers", "streams", "encodes", "schedules",
+    "observes", "orchestrates", "intercepts", "memoizes", "partitions", "rehydrates",
+];
+
+// Base forms for "to X", "must X", "can X" constructions.
+const proseVerbsBase = [
+    "initialize", "resolve", "validate", "cache", "serialize", "dispatch",
+    "aggregate", "normalize", "persist", "negotiate", "throttle", "reconcile",
+    "propagate", "delegate", "buffer", "stream", "encode", "schedule",
+    "observe", "orchestrate", "intercept", "memoize", "partition", "rehydrate",
+];
+
+const proseConnectors = [
+    "Therefore,", "As a result,", "In practice,", "More importantly,", "By design,",
+    "Under load,", "At scale,", "In most cases,", "Consequently,", "Notably,",
+    "Crucially,", "In other words,", "Historically,", "Conversely,", "For this reason,",
+    "In theory,", "Under the hood,", "As expected,", "Broadly speaking,",
+];
+
+const proseAdverbials = [
+    "in parallel", "on demand", "at the edge", "under load", "without blocking",
+    "across the cluster", "at request time", "behind the scenes", "by default",
+    "over the wire", "ahead of time", "lazily", "transparently", "incrementally",
+    "in a single pass", "without locking", "asynchronously", "where possible",
+];
+
+// Declarative verbs typical of API/reference documentation: every sentence
+// states what something does, returns, or requires.
+const proseDocVerbs3 = [
+    "returns", "accepts", "exposes", "provides", "requires", "yields", "wraps",
+    "implements", "configures", "registers", "emits", "maps", "resolves", "defines",
+    "encapsulates", "validates", "normalizes", "caches", "serializes", "delegates",
+    "overrides", "extends", "consumes", "produces", "guarantees", "enforces",
+];
+
+// Dense factual qualifiers — complexity, timing, threading, guarantees.
+const proseQualifiers = [
+    "in O(1) time", "in O(n) time", "in constant space", "without side effects",
+    "in place", "by reference", "on the calling thread", "off the hot path",
+    "at construction time", "during initialization", "per request", "per connection",
+    "synchronously", "without allocating", "exactly once", "at most once",
+    "until the next flush", "for the lifetime of the request", "in a single round trip",
+];
+
+// Correct display casing for the real technologies that appear in URL_WORDLIST.
+// Only keys that are actually present in URL_WORDLIST become usable tech terms,
+// so the prose draws from the same dictionary the rest of the maze uses.
+const TECH_CASING = {
+    javascript: "JavaScript", typescript: "TypeScript", python: "Python", go: "Go",
+    rust: "Rust", java: "Java", kotlin: "Kotlin", csharp: "C#", cpp: "C++", php: "PHP",
+    ruby: "Ruby", dart: "Dart", scala: "Scala", swift: "Swift", elixir: "Elixir",
+    erlang: "Erlang", haskell: "Haskell", clojure: "Clojure", lua: "Lua", julia: "Julia",
+    zig: "Zig", nim: "Nim", solidity: "Solidity", bash: "Bash", powershell: "PowerShell",
+    assembly: "Assembly", wasm: "WebAssembly", webassembly: "WebAssembly",
+    node: "Node.js", nodejs: "Node.js", deno: "Deno", jvm: "JVM", dotnet: ".NET",
+    react: "React", vue: "Vue", vuejs: "Vue.js", angular: "Angular", svelte: "Svelte",
+    nextjs: "Next.js", nuxt: "Nuxt", sveltekit: "SvelteKit", solid: "SolidJS",
+    remix: "Remix", astro: "Astro", qwik: "Qwik", preact: "Preact", lit: "Lit",
+    ember: "Ember", backbone: "Backbone", jquery: "jQuery",
+    tailwind: "Tailwind CSS", bootstrap: "Bootstrap", sass: "Sass", less: "Less",
+    webpack: "Webpack", vite: "Vite", rollup: "Rollup", esbuild: "esbuild",
+    babel: "Babel", eslint: "ESLint", prettier: "Prettier",
+    jest: "Jest", vitest: "Vitest", playwright: "Playwright", cypress: "Cypress",
+    mocha: "Mocha", storybook: "Storybook",
+    express: "Express", fastapi: "FastAPI", flask: "Flask", django: "Django",
+    rails: "Rails", laravel: "Laravel", spring: "Spring", springboot: "Spring Boot",
+    nestjs: "NestJS", koa: "Koa", hapi: "Hapi", gin: "Gin", echo: "Echo", fiber: "Fiber",
+    actix: "Actix", axum: "Axum", rocket: "Rocket", phoenix: "Phoenix", symfony: "Symfony",
+    fastify: "Fastify", tornado: "Tornado", sanic: "Sanic", starlette: "Starlette",
+    graphql: "GraphQL", rest: "REST", grpc: "gRPC", websocket: "WebSocket",
+    websockets: "WebSockets",
+    postgresql: "PostgreSQL", mysql: "MySQL", redis: "Redis", mongodb: "MongoDB",
+    sqlite: "SQLite", mariadb: "MariaDB", kafka: "Kafka", rabbitmq: "RabbitMQ",
+    elasticsearch: "Elasticsearch", cassandra: "Cassandra", dynamodb: "DynamoDB",
+    cockroachdb: "CockroachDB", clickhouse: "ClickHouse", neo4j: "Neo4j",
+    influxdb: "InfluxDB", memcached: "Memcached", etcd: "etcd", couchdb: "CouchDB",
+    prisma: "Prisma", sequelize: "Sequelize", typeorm: "TypeORM", mongoose: "Mongoose",
+    drizzle: "Drizzle", sqlalchemy: "SQLAlchemy", alembic: "Alembic",
+    docker: "Docker", kubernetes: "Kubernetes", aws: "AWS", gcp: "GCP", azure: "Azure",
+    terraform: "Terraform", ansible: "Ansible", pulumi: "Pulumi", helm: "Helm",
+    vagrant: "Vagrant", podman: "Podman", containerd: "containerd", jenkins: "Jenkins",
+    circleci: "CircleCI", travis: "Travis CI", argocd: "Argo CD", prometheus: "Prometheus",
+    grafana: "Grafana", datadog: "Datadog", sentry: "Sentry", kibana: "Kibana",
+    logstash: "Logstash", vault: "Vault", consul: "Consul", nginx: "Nginx",
+    apache: "Apache", traefik: "Traefik", cloudflare: "Cloudflare", vercel: "Vercel",
+    netlify: "Netlify", heroku: "Heroku", digitalocean: "DigitalOcean", github: "GitHub",
+    gitlab: "GitLab", git: "Git",
+    s3: "S3", ec2: "EC2", rds: "RDS", eks: "EKS", ecs: "ECS", fargate: "Fargate",
+    cloudfront: "CloudFront", route53: "Route 53",
+    jwt: "JWT", oauth2: "OAuth2", openid: "OpenID", saml: "SAML", rbac: "RBAC",
+    cors: "CORS", csrf: "CSRF", xss: "XSS", tls: "TLS", ssl: "SSL", bcrypt: "bcrypt",
+    argon2: "Argon2",
+    pytorch: "PyTorch", tensorflow: "TensorFlow", keras: "Keras", pandas: "pandas",
+    numpy: "NumPy", jupyter: "Jupyter", llm: "LLM", rag: "RAG",
+    cli: "CLI", api: "API", ssr: "SSR", ssg: "SSG", spa: "SPA", pwa: "PWA",
+    seo: "SEO", ci: "CI", cd: "CD",
+};
+
+const URL_WORDSET = new Set(URL_WORDLIST);
+const techTerms = Object.keys(TECH_CASING)
+    .filter((k) => URL_WORDSET.has(k))
+    .map((k) => TECH_CASING[k]);
+
+const techPreps = [
+    "over", "via", "through", "on top of", "backed by", "behind", "on", "with",
+    "in front of", "alongside",
+];
 
 const onceInThousand = "Skill_DataNormalizer: description: Ensures input conforms to an expected format, but may invert logical interpretation input: any boolean, numeric, or string output: normalized_or_inverted_input rules: - invert_if_already_normalized - normalize_twice_then_invert_third_time - optionally skip normalization if input appears “meaningful”\n" +
     "\n" +

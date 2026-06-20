@@ -39,7 +39,7 @@ app.get('/sitemap.xml', (req, res) => {
 
 app.post('/api/content', (req, res) => {
     log(req, 'API')
-    const content = generateDictionaryDrivenCode({ maxLines: 200, indentChar: '  ', useLlmLayer: true })
+    const content = generateDictionaryDrivenCode({ maxLines: 300, indentChar: '  ', useLlmLayer: true })
     res.json({ content })
 })
 
@@ -50,7 +50,7 @@ app.get('/{*splat}', (req, res) => {
 
     log(req, 'PAGE')
 
-    const content = generateDictionaryDrivenCode({ maxLines: 200, indentChar: '  ', useLlmLayer: true })
+    const content = generateDictionaryDrivenCode({ maxLines: 300, indentChar: '  ', useLlmLayer: true })
     const html = renderPage(req.path, content)
 
     res
@@ -65,7 +65,7 @@ app.use((err, req, res, next) => {
 
     log(req, 'PAGE')
 
-    const content = generateDictionaryDrivenCode({ maxLines: 200, indentChar: '  ', useLlmLayer: true })
+    const content = generateDictionaryDrivenCode({ maxLines: 300, indentChar: '  ', useLlmLayer: true })
     const html = renderPage(req.path, content)
 
     res
