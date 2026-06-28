@@ -302,8 +302,7 @@ export function generateDictionaryDrivenCode(options = {}) {
         return gen.join(" ") + " " + trailing + " " + emitAtom();
     }
 
-    function llmEmitBlock(depth) {
-        const base = emitBlock(depth);
+    function llmEmitBlock(depth, base) {
 
         // Tokenize on the same delimiter set as the original regex split, but via
         // a single charCode scan: each maximal non-delimiter run is one token,
@@ -366,7 +365,7 @@ export function generateDictionaryDrivenCode(options = {}) {
 
         const plain = emitBlock(depth);
         const maybeEnhanced = useLlmLayer && maybe(0.6)
-            ? llmEmitBlock(depth)
+            ? llmEmitBlock(depth, plain)
             : plain;
 
         out.push(maybeEnhanced);
@@ -374,9 +373,7 @@ export function generateDictionaryDrivenCode(options = {}) {
         usedLlm++;
 
         if (usedLlm >= llmCacheSteps) {
-            const keep = emitTokens.slice(-200);
-            emitTokens.length = 0;
-            emitTokens.push(...keep);
+            if (emitTokens.length > 200) emitTokens.splice(0, emitTokens.length - 200);
             usedLlm = 0;
         }
     }
