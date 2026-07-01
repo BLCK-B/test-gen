@@ -129,11 +129,12 @@ export function linksFor(pathname) {
     }
 
     const deeper = []
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 50; i++) {
         const extra = Math.floor(rng() * 10) === 0 ? '-' + Math.floor(rng() * 100) : ''
         deeper.push('/' + makeSlug(rng) + extra)
     }
 
+    if (slug.length > 200) return {slug, related: [], deeper};
     return { slug, related: [...related], deeper }
 }
 
