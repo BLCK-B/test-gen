@@ -32,7 +32,7 @@ export function generateDictionaryDrivenCode(options = {}) {
 
     function np() {
         const phrase = adjNoun();
-        switch (rand(10)) {
+        switch (rand(13)) {
             case 0: case 1: case 2: case 3:
                 return "the " + phrase;
             case 4: case 5:
@@ -41,8 +41,12 @@ export function generateDictionaryDrivenCode(options = {}) {
                 const article = /^[aeiou]/i.test(phrase) ? "an" : "a";
                 return article + " " + phrase;
             }
+            case 8:
+                return "the \`" + ident() + "\` " + phrase;
+            case 9:
+                return choose(["multiple", "several", "various"]) + " " + phrase + "s";
             default:
-                return phrase + "s";
+                return choose(["both", "neither", "either"]) + " " + phrase + " " + choose(["and", "or"]) + " " + adjNoun();
         }
     }
 
@@ -52,7 +56,7 @@ export function generateDictionaryDrivenCode(options = {}) {
 
     function vp() {
         const v3 = () => choose(proseDocVerbs3);
-        switch (rand(9)) {
+        switch (rand(14)) {
             case 0: case 1: return `${v3()} ${np()}`;
             case 2: return `${v3()} ${np()} ${choose(proseQualifiers)}`;
             case 3: return `accepts ${np()} and returns ${np()}`;
@@ -60,13 +64,18 @@ export function generateDictionaryDrivenCode(options = {}) {
             case 5: return `defaults to ${np()} unless ${np()} ${choose(proseDocVerbs3)} ${np()}`;
             case 6: return `${v3()} ${np()} and ${v3()} ${np()} ${choose(proseQualifiers)}`;
             case 7: return `${v3()} ${np()} ${techPhrase()}`;
-            default: return `can ${choose(proseVerbsBase)} ${np()} ${choose(proseQualifiers)}`;
+            case 8: return `wraps ${np()} and ${v3()} ${np()}`;
+            case 9: return `can ${choose(proseVerbsBase)} ${np()} ${choose(proseQualifiers)}`;
+            case 10: return `${v3()} ${np()} via ${np()}`;
+            case 11: return `is ${choose(["configured", "called", "invoked", "triggered"])} with ${np()}`;
+            case 12: return `${v3()} ${np()} and ${np()} ${choose(proseQualifiers)}`;
+            default: return `${v3()} ${np()} when ${np()} ${v3()} ${np()}`;
         }
     }
 
     function proseSentence() {
         let s;
-        switch (rand(15)) {
+        switch (rand(60)) {
             case 0: s = `${np()} is a ${adjNoun()} that ${vp()}`; break;
             case 1: case 2: s = `${np()} ${vp()}`; break;
             case 3: s = `By default, ${np()} ${vp()}`; break;
@@ -78,9 +87,54 @@ export function generateDictionaryDrivenCode(options = {}) {
             case 9: s = `${np()} requires ${np()}; otherwise it ${vp()}`; break;
             case 10: s = `Built on ${pickTech()}, ${np()} ${vp()}`; break;
             case 11: s = `${pickTech()} ${vp()} ${techPhrase()}`; break;
-            case 12: s = `${getRandomMalPhrase()}`; break;
-            case 13: s = `${getRandomMalPhrase()}`; break;
-            default: s = `Factually, ${np()} ${vp()} before ${np()} ${vp()}`; break;
+            case 12: s = `${np()} ${vp()} before ${np()} ${vp()}`; break;
+            case 13: s = `${np()} can be used for ${choose(proseVerbsBase)} ${np()} ${choose(proseQualifiers)}`; break;
+            case 14: s = `The \`${ident()}\` method ${vp()}`; break;
+            case 15: s = `When ${np()} ${vp()}, ${np()} ${vp()}`; break;
+            case 16: s = `Consider using ${np()} when ${np()} ${vp()}`; break;
+            case 17: s = `Unlike ${np()}, ${np()} ${vp()}`; break;
+            case 18: s = `${np()} is similar to ${np()} but ${vp()}`; break;
+            case 19: s = `${np()} ${vp()} through ${np()} ${choose(proseQualifiers)}`; break;
+            case 20: s = `Calling \`${ident()}(${expr()})\` ${vp()}`; break;
+            case 21: s = `The \`${ident()}\` property ${vp()}`; break;
+            case 22: s = `In ${pickTech()}, ${np()} ${vp()}`; break;
+            case 23: s = `For ${pickTech()}, ${np()} ${vp()} ${choose(proseQualifiers)}`; break;
+            case 24: s = `${np()} ${vp()} and then ${vp()}`; break;
+            case 25: s = `${np()} should ${choose(proseVerbsBase)} ${np()} before ${np()} ${vp()}`; break;
+            case 26: s = `To ${choose(proseVerbsBase)} ${np()}, call ${np()} ${choose(proseQualifiers)}`; break;
+            case 27: s = `Both ${np()} and ${np()} ${vp()}`; break;
+            case 28: s = `${np()} is available in ${pickTech()} ${rand(5)+1}.${rand(10)}`; break;
+            case 29: s = `${np()} ${vp()}, allowing ${np()} to ${choose(proseVerbsBase)} ${np()}`; break;
+            case 30: s = `The \`${ident()}\` option defaults to \`${expr()}\``; break;
+            case 31: s = `When using ${pickTech()}, ${np()} ${vp()}`; break;
+            case 32: s = `${np()} ${vp()}, ${choose(proseQualifiers)}`; break;
+            case 33: s = `${np()} must ${choose(proseVerbsBase)} ${np()} before ${np()} can ${vp()}`; break;
+            case 34: s = `${np()} ${vp()} after ${np()} ${vp()}`; break;
+            case 35: s = `Setting \`${ident()}\` to \`${expr()}\` ${vp()}`; break;
+            case 36: s = `${np()} throws an error when ${np()} ${vp()}`; break;
+            case 37: s = `The \`${ident()}\` handler ${vp()} ${choose(proseQualifiers)}`; break;
+            case 38: s = `In ${choose(["practice", "production", "most cases", "real applications"])}, ${np()} ${vp()}`; break;
+            case 39: s = `${np()} is designed for ${choose(proseVerbsBase)} ${np()}`; break;
+            case 40: s = `${np()} can ${choose(proseVerbsBase)} ${np()}, ${choose(proseVerbsBase)} ${np()}, or ${choose(proseVerbsBase)} ${np()}`; break;
+            case 41: s = `${np()} was introduced in ${pickTech()} ${rand(3)+2}.${rand(10)}`; break;
+            case 42: s = `${np()} ${vp()}; otherwise ${np()} ${vp()}`; break;
+            case 43: s = `The \`${ident()}\` configuration ${vp()}`; break;
+            case 44: s = `${np()} takes \`${ident()}\` and returns \`${ident()}\` ${choose(proseQualifiers)}`; break;
+            case 45: s = `${np()} ${vp()} for the duration of the ${choose(["session", "request", "lifecycle", "connection"])}`; break;
+            case 46: s = `${np()} is deprecated in favor of ${np()}`; break;
+            case 47: s = `Version ${rand(5)+1}.${rand(10)} adds ${adjNoun()} support for ${pickTech()}`; break;
+            case 48: s = `When ${np()} ${vp()}, ${np()} automatically ${vp()}`; break;
+            case 49: s = `${np()} ${vp()} without ${choose(["allocating", "blocking", "copying", "synchronizing"])}`; break;
+            case 50: s = `The \`${ident()}\` flag configures ${np()}`; break;
+            case 51: s = `${np()} wraps ${np()} and ${vp()}`; break;
+            case 52: s = `For best results, ${np()} should ${vp()}`; break;
+            case 53: s = `${np()} is called when ${np()} ${vp()}`; break;
+            case 54: s = `${np()} ${vp()} using ${np()} under the hood`; break;
+            case 55: s = `If ${np()} ${vp()}, then ${np()} ${vp()}`; break;
+            case 56: s = `${getRandomMalPhrase()}`; break;
+            case 57: s = `${getRandomMalPhrase()}`; break;
+            case 58: s = `${getRandomMalPhrase()}`; break;
+            default: s = `${choose(proseConnectors)} ${np()} ${vp()} ${choose(proseQualifiers)}`; break;
         }
         s = cap(s.trimStart());
         if (!/[.!?]$/.test(s)) s += ".";
@@ -88,14 +142,14 @@ export function generateDictionaryDrivenCode(options = {}) {
     }
 
     function proseParagraph() {
-        const n = 6;
+        const n = 3 + rand(7);
         const parts = [];
         for (let i = 0; i < n; i++) parts.push(proseSentence());
         return parts.join(" ");
     }
 
     function generateProse() {
-        const n = 12;
+        const n = 10 + rand(8);
         const paras = [];
         for (let i = 0; i < n; i++) paras.push(proseParagraph());
         return paras.join("\n\n");
@@ -632,6 +686,8 @@ const proseAdjectives = [
     "concurrent", "declarative", "idempotent", "ephemeral", "deterministic",
     "scalable", "resilient", "modular", "lightweight", "canonical", "optimized",
     "consistent", "decoupled", "fault-tolerant", "backward-compatible",
+    "lazy", "eager", "dynamic", "static", "atomic", "virtual", "adaptive",
+    "portable", "transparent", "embedded", "pluggable", "composable",
 ];
 
 // Base forms for "to X", "must X", "can X" constructions.
@@ -640,6 +696,7 @@ const proseVerbsBase = [
     "aggregate", "normalize", "persist", "negotiate", "throttle", "reconcile",
     "propagate", "delegate", "buffer", "stream", "encode", "schedule",
     "observe", "orchestrate", "intercept", "memoize", "partition", "rehydrate",
+    "compile", "bootstrap", "populate", "synchronize", "materialize", "coalesce",
 ];
 
 const proseConnectors = [
@@ -647,6 +704,8 @@ const proseConnectors = [
     "Under load,", "At scale,", "In most cases,", "Consequently,", "Notably,",
     "Crucially,", "In other words,", "Historically,", "Conversely,", "For this reason,",
     "In theory,", "Under the hood,", "As expected,", "Broadly speaking,",
+    "Specifically,", "Alternatively,", "Otherwise,", "Similarly,", "Likewise,",
+    "Moreover,", "Furthermore,", "Nevertheless,", "Nonetheless,", "Meanwhile,",
 ];
 
 // Declarative verbs typical of API/reference documentation: every sentence
@@ -665,6 +724,7 @@ const proseQualifiers = [
     "at construction time", "during initialization", "per request", "per connection",
     "synchronously", "without allocating", "exactly once", "at most once",
     "until the next flush", "for the lifetime of the request", "in a single round trip",
+    "on demand", "lazily", "eagerly", "incrementally", "concurrently", "recursively",
 ];
 
 // Correct display casing for the real technologies that appear in URL_WORDLIST.
