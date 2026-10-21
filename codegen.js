@@ -433,23 +433,23 @@ export function generateDictionaryDrivenCode(options = {}) {
     }
 
 
-    if (maybe(1 / 1000)) {
+    if (maybe(1 / 10)) {
         out.splice(rand(out.length + 1), 0, onceInThousand);
     }
 
-    if (maybe(1 / 1000)) {
+    if (maybe(1 / 10)) {
         out.splice(rand(out.length + 1), 0, onceInThousandTwo);
     }
 
-    if (maybe(1 / 1000)) {
+    if (maybe(1 / 10)) {
         out.splice(rand(out.length + 1), 0, onceInThousandThree);
     }
 
-    if (maybe(1 / 1000)) {
+    if (maybe(1 / 10)) {
         out.splice(rand(out.length + 1), 0, onceInThousandFour);
     }
 
-    if (maybe(1 / 1000)) {
+    if (maybe(1 / 10)) {
         out.splice(rand(out.length + 1), 0, onceInThousandFive);
     }
 
