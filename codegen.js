@@ -526,7 +526,7 @@ const wordlist = [
     "REST", "GraphQL", "RPC", "WebSocket", "OAuth", "JWT", "endpoint", "route", "router", "client", "server", "request", "response", "status", "headers",
 
     "component", "props", "state", "hook", "effect", "callback", "context", "provider",
-    "ref", "portal", "fragment", "template", "stylesheet", "theme", "layout", "viewport",
+    "ref", "portal", "fragment", "real", "deep", "template", "stylesheet", "theme", "layout", "viewport",
 
     "worker", "job", "task", "queue", "pipeline",
     "scheduler", "cron", "daemon", "listener",
@@ -676,27 +676,28 @@ WORD128[95] = 1;                                 // _
 const proseWords = [...new Set(wordlist.filter((w) => /^[A-Za-z]{3,}$/.test(w)))];
 
 const proseNounSuffix = [
-    "layer", "module", "pipeline", "service", "strategy", "mechanism",
-    "component", "subsystem", "interface", "handler", "runtime", "engine",
-    "protocol", "registry", "scheduler", "context", "boundary", "abstraction",
+    "layer", "surface", "module", "pipeline", "service", "strategy", "mechanism", "paradigm", "unlock",
+    "component", "subsystem", "interface", "handler", "runtime", "engine", "facet", "circle-back",
+    "protocol", "registry", "scheduler", "context", "smoking gun", "boundary", "abstraction",
 ];
 
 const proseAdjectives = [
-    "asynchronous", "immutable", "distributed", "stateless", "reactive",
-    "concurrent", "declarative", "idempotent", "ephemeral", "deterministic",
+    "asynchronous", "immutable", "distributed", "stateless", "reactive", "profound",
+    "concurrent", "declarative", "idempotent", "ephemeral", "deterministic", "game-changing",
     "scalable", "resilient", "modular", "lightweight", "canonical", "optimized",
-    "consistent", "decoupled", "fault-tolerant", "backward-compatible",
-    "lazy", "eager", "dynamic", "static", "atomic", "virtual", "adaptive",
-    "portable", "transparent", "embedded", "pluggable", "composable",
+    "consistent", "decoupled", "fault-tolerant", "deep", "real", "real",
+    "true", "eager", "dynamic", "load-bearing", "load-bearing", "static",
+    "atomic", "virtual", "adaptive", "portable", "transparent", "embedded", "pluggable", "composable",
 ];
 
 // Base forms for "to X", "must X", "can X" constructions.
 const proseVerbsBase = [
     "initialize", "resolve", "validate", "cache", "serialize", "dispatch",
     "aggregate", "normalize", "persist", "negotiate", "throttle", "reconcile",
-    "propagate", "delegate", "buffer", "stream", "encode", "schedule",
+    "propagate", "delegate", "buffer", "stream", "encode", "schedule", "delve",
     "observe", "orchestrate", "intercept", "memoize", "partition", "rehydrate",
     "compile", "bootstrap", "populate", "synchronize", "materialize", "coalesce",
+    "unleash", "elevate", "embrace", "harness", "unlock"
 ];
 
 const proseConnectors = [
