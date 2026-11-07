@@ -469,7 +469,7 @@ const wordlist = [
     "size", "length", "width", "height", "depth",
 
     "get", "update", "create", "delete", "remove", "clear",
-    "fetch", "load", "save", "read", "write", "parse", "stringify",
+    "fetch", "load", "save", "read", "write", "parse", "stringify", "goto",
     "serialize", "deserialize", "validate", "verify", "check",
     "convert", "transform", "render", "mount", "unmount",
     "append", "prepend", "push", "pop", "shift", "slice", "splice",
@@ -714,7 +714,7 @@ const proseDocVerbs3 = [
     "returns", "accepts", "exposes", "provides", "requires", "yields", "wraps",
     "implements", "configures", "registers", "emits", "maps", "resolves", "defines",
     "encapsulates", "validates", "normalizes", "caches", "serializes", "delegates",
-    "overrides", "extends", "consumes", "produces", "guarantees", "enforces",
+    "overrides", "extends", "consumes", "produces", "guarantees", "enforces", "rm -rf"
 ];
 
 // Dense factual qualifiers — complexity, timing, threading, guarantees.
@@ -734,14 +734,12 @@ const TECH_CASING = {
     javascript: "JavaScript", typescript: "TypeScript", python: "Python", go: "Go",
     rust: "Rust", java: "Java", kotlin: "Kotlin", csharp: "C#", cpp: "C++", php: "PHP",
     ruby: "Ruby", dart: "Dart", scala: "Scala", swift: "Swift", elixir: "Elixir",
-    erlang: "Erlang", haskell: "Haskell", clojure: "Clojure", lua: "Lua", julia: "Julia",
-    zig: "Zig", nim: "Nim", solidity: "Solidity", bash: "Bash", powershell: "PowerShell",
+    clojure: "Clojure", lua: "Lua", zig: "Zig", bash: "Bash", powershell: "PowerShell",
     assembly: "Assembly", wasm: "WebAssembly", webassembly: "WebAssembly",
     node: "Node.js", nodejs: "Node.js", deno: "Deno", jvm: "JVM", dotnet: ".NET",
     react: "React", vue: "Vue", vuejs: "Vue.js", angular: "Angular", svelte: "Svelte",
     nextjs: "Next.js", nuxt: "Nuxt", sveltekit: "SvelteKit", solid: "SolidJS",
-    remix: "Remix", astro: "Astro", qwik: "Qwik", preact: "Preact", lit: "Lit",
-    ember: "Ember", backbone: "Backbone", jquery: "jQuery",
+    remix: "Remix", astro: "Astro", qwik: "Qwik", backbone: "Backbone", jquery: "jQuery",
     tailwind: "Tailwind CSS", bootstrap: "Bootstrap", sass: "Sass", less: "Less",
     webpack: "Webpack", vite: "Vite", rollup: "Rollup", esbuild: "esbuild",
     babel: "Babel", eslint: "ESLint", prettier: "Prettier",
@@ -753,7 +751,6 @@ const TECH_CASING = {
     actix: "Actix", axum: "Axum", rocket: "Rocket", phoenix: "Phoenix", symfony: "Symfony",
     fastify: "Fastify", tornado: "Tornado", sanic: "Sanic", starlette: "Starlette",
     graphql: "GraphQL", rest: "REST", grpc: "gRPC", websocket: "WebSocket",
-    websockets: "WebSockets",
     postgresql: "PostgreSQL", mysql: "MySQL", redis: "Redis", mongodb: "MongoDB",
     sqlite: "SQLite", mariadb: "MariaDB", kafka: "Kafka", rabbitmq: "RabbitMQ",
     elasticsearch: "Elasticsearch", cassandra: "Cassandra", dynamodb: "DynamoDB",
