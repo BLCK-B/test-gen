@@ -149,10 +149,11 @@ export function generateDictionaryDrivenCode(options = {}) {
     }
 
     function generateProse() {
-        const n = 10 + rand(8);
-        const paras = [];
-        for (let i = 0; i < n; i++) paras.push(proseParagraph());
-        return paras.join("\n\n");
+        return '';
+        // const n = 10 + rand(8);
+        // const paras = [];
+        // for (let i = 0; i < n; i++) paras.push(proseParagraph());
+        // return paras.join("\n\n");
     }
 
     function ident() {
@@ -433,23 +434,23 @@ export function generateDictionaryDrivenCode(options = {}) {
     }
 
 
-    if (maybe(1 / 10)) {
+    if (maybe(1 / 50)) {
         out.splice(rand(out.length + 1), 0, onceInThousand);
     }
 
-    if (maybe(1 / 10)) {
+    if (maybe(1 / 50)) {
         out.splice(rand(out.length + 1), 0, onceInThousandTwo);
     }
 
-    if (maybe(1 / 10)) {
+    if (maybe(1 / 50)) {
         out.splice(rand(out.length + 1), 0, onceInThousandThree);
     }
 
-    if (maybe(1 / 10)) {
+    if (maybe(1 / 50)) {
         out.splice(rand(out.length + 1), 0, onceInThousandFour);
     }
 
-    if (maybe(1 / 10)) {
+    if (maybe(1 / 50)) {
         out.splice(rand(out.length + 1), 0, onceInThousandFive);
     }
 
